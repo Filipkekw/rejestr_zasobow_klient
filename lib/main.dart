@@ -11,6 +11,7 @@ class InventoryApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: ItemsPage(),
     );
   }
@@ -55,12 +56,23 @@ class _ItemsPageState extends State<ItemsPage> {
                 final item = items[i];
                 return ListTile(
                   title: Text(item.name),
-                  subtitle: Text('${item.category} — ${item.purchaseDate}'),
+                  subtitle:
+                      Text('${item.category} — ${item.purchaseDate} - ${item.description}'),
                 );
               },
             );
           }
         },
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Dodaj nowy zasób – wkrótce!')),
+          );
+        },
+        backgroundColor: Colors.blue,
+        child: const Icon(Icons.add),
       ),
     );
   }

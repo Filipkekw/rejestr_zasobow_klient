@@ -1,16 +1,58 @@
-# rejestr_zasobow_klient
+# Rejestr Zasobów – klient Flutter
 
-A new Flutter project.
+Aplikacja mobilna łącząca się z serwerem FastAPI uruchomionym na Raspberry Pi przez sieć Wi‑Fi.  
+Pozwala na przeglądanie zasobów z bazy SQLite zainstalowanej na RPi.
 
-## Getting Started
+## Funkcje
+- pobiera listę pozycji z bazy na Raspberry Pi,
+- wyświetla nazwę, kategorię i datę zakupu i opis,
+- posiada przycisk "+" do dodania nowego zasobu (wkrótce).
 
-This project is a starting point for a Flutter application.
 
-A few resources to get you started if this is your first Flutter project:
+## Wymagania
+- Flutter SDK 3.0+
+- Dart 3.0+
+- Android Studio / VS Code z pluginem Flutter
+- Telefon z Androidem lub emulator
+- Działający serwer FastAPI na Raspberry Pi (plik `wifi_server.py`)
+    - Instrukcje konfiguracji serwera zawarte w pliku README.md na github.com/Filipkekw/Rejestr_zasobow_RPi-4
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Konfiguracja połączenia z RPi
+
+W pliku `lib/api/api_service.dart` zmień adres IP na adres Twojego Raspberry Pi, np.:
+
+```dart
+final ApiService api = ApiService('http://192.168.2.10:8000');
+```
+
+Adres IP twojego Raspberry Pi sprawdzisz poleceniem:
+```bash
+hostname -I;
+```
+Upewnij się, że telefon i RPi są w tej samej sieci Wi-Fi.
+
+## Instalacja 
+W terminalu projektu wpisz:
+```bash
+flutter pub get;
+```
+## Uruchamianie na telefonie
+1. Podłącz telefon z Androidem do komputera przez kabel USB.
+2. Włącz Opcje programisty i Debugowanie USB
+3. Sprawdź połączenie w terminalu:
+```bash
+flutter devices
+```
+4. Uruchom aplikacje:
+```bash
+flutter run
+```
+
+## Budowanie i instalacja APK
+Aby utworzyć plik APK do ręcznej instalacji wpisz w terminalu:
+```bash
+flutter build apk --release
+```
+Utworzony plik skopiuj na telefon i zainstaluj.
