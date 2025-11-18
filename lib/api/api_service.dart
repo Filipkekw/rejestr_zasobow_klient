@@ -22,4 +22,27 @@ class ApiService {
       throw Exception('Ping nieudany');
     }
   }
+  Future<void> addItem({
+    required String name,
+    required String category,
+    required String purchaseDate,
+    required String serialNumber,
+    required String description,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/items'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        "name": name,
+        "category": category,
+        "purchase_date": purchaseDate,
+        "serial_number": serialNumber,
+        "description": description,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Nie udało się dodać elementu: ${response.statusCode}');
+    }
+  }
 }
