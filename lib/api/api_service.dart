@@ -9,26 +9,13 @@ class ApiService {
   Future<List<Item>> fetchItems() async {
     final response = await http.get(Uri.parse('$baseUrl/items'));
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
+      final List data = jsonDecode(response.body);
       return data.map((e) => Item.fromJson(e)).toList();
     } else {
-      throw Exception('Błąd HTTP: ${response.statusCode}');
+      throw Exception('Błąd pobierania danych: ${response.statusCode}');
     }
   }
 
-  Future<void> deleteItem(int id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/items/$id'));
-    if (response.statusCode != 200) {
-      throw Exception('Nie udało się usunąć elementu $id');
-    }
-  }
-
-  Future<void> ping() async {
-    final response = await http.get(Uri.parse('$baseUrl/ping'));
-    if (response.statusCode != 200) {
-      throw Exception('Ping nieudany');
-    }
-  }
   Future<void> addItem({
     required String name,
     required String category,
@@ -40,16 +27,46 @@ class ApiService {
       Uri.parse('$baseUrl/items'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        "name": name,
-        "category": category,
-        "purchase_date": purchaseDate,
-        "serial_number": serialNumber,
-        "description": description,
+        'name': name,
+        'category': category,
+        'purchase_date': purchaseDate,
+        'serial_number': serialNumber,
+        'description': description,
       }),
     );
-
     if (response.statusCode != 200) {
-      throw Exception('Nie udało się dodać elementu: ${response.statusCode}');
+      throw Exception('Nie udało się dodać elementu');
+    }
+  }
+
+  Future<void> updateItem(
+    int id,
+    String name,
+    String category,
+    String purchaseDate,
+    String serialNumber,
+    String description,
+  ) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/items/$id'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'name': name,
+        'category': category,
+        'purchase_date': purchaseDate,
+        'serial_number': serialNumber,
+        'description': description,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Nie udało się zaktualizować elementu $id');
+    }
+  }
+
+  Future<void> deleteItem(int id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/items/$id'));
+    if (response.statusCode != 200) {
+      throw Exception('Nie udało się usunąć elementu $id');
     }
   }
 }

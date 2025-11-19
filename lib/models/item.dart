@@ -25,4 +25,15 @@ class Item {
       description: json['description'] ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'category': category,
+      'purchase_date': purchaseDate,
+      'serial_number': serialNumber,
+      'description': description,
+    };
+  }
 }

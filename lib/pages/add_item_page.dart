@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // do formatowania daty
+import 'package:intl/intl.dart';
 import '../api/api_service.dart';
+import '../models/item.dart'; // model z id, name, category, purchaseDate itp.
 
 class AddItemPage extends StatefulWidget {
-  const AddItemPage({super.key});
+  final Item? editItem; // null -> dodawanie, nie-null -> edycja
+  const AddItemPage({super.key, this.editItem});
 
   @override
   State<AddItemPage> createState() => _AddItemPageState();
@@ -37,6 +39,16 @@ class _AddItemPageState extends State<AddItemPage> {
   void initState() {
     super.initState();
     _selectedCategory = _categories.first;
+
+    // jeśli to edycja → wypełnij formularz istniejącymi danymi
+    if (widget.editItem != null) {
+      final e = widget.editItem!;
+      _nameController.text = e.name;
+      _serialController.text = e.serialNumber;
+      _descriptionController.text = e.description;
+      _selectedCategory = e.category;
+      _selectedDate = DateTime.tryParse(e.purchaseDate) ?? DateTime.now();
+    }
   }
 
   @override
@@ -67,19 +79,19 @@ class _AddItemPageState extends State<AddItemPage> {
       },
     );
     if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
+      setState(() => _selectedDate = picked);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final dateFormatted = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    final isEditing = widget.editItem != null;
+    final api = ApiService('http://192.168.2.71:8000'); // IP twojego RPi
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dodaj przedmiot'),
+        title: Text(isEditing ? 'Edytuj przedmiot' : 'Dodaj przedmiot'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -137,7 +149,7 @@ class _AddItemPageState extends State<AddItemPage> {
                         hintText: dateFormatted,
                       ),
                       controller:
-                          TextEditingController(text: dateFormatted), // pokazuje datę
+                          TextEditingController(text: dateFormatted),
                       onTap: () => _pickDate(context),
                     ),
                   ),
@@ -172,28 +184,45 @@ class _AddItemPageState extends State<AddItemPage> {
               ),
               const SizedBox(height: 30),
 
-              // --- Przycisk ZAPISZ ---
+              // --- Przycisk ZAPIS/ZAKTUALIZUJ ---
               Center(
                 child: ElevatedButton.icon(
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      final api = ApiService('http://192.168.2.71:8000'); // ← adres Twojego RPi
-                      final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+                      final dateStr =
+                          DateFormat('yyyy-MM-dd').format(_selectedDate);
 
                       try {
-                        await api.addItem(
-                          name: _nameController.text.trim(),
-                          category: _selectedCategory ?? 'Inne',
-                          purchaseDate: dateStr,
-                          serialNumber: _serialController.text.trim(),
-                          description: _descriptionController.text.trim(),
-                        );
+                        if (isEditing) {
+                          // 📝 aktualizacja istniejącego elementu
+                          await api.updateItem(
+                            widget.editItem!.id,
+                            _nameController.text.trim(),
+                            _selectedCategory ?? 'Inne',
+                            dateStr,
+                            _serialController.text.trim(),
+                            _descriptionController.text.trim(),
+                          );
+                        } else {
+                          // ➕ dodawanie nowego elementu
+                          await api.addItem(
+                            name: _nameController.text.trim(),
+                            category: _selectedCategory ?? 'Inne',
+                            purchaseDate: dateStr,
+                            serialNumber: _serialController.text.trim(),
+                            description: _descriptionController.text.trim(),
+                          );
+                        }
 
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('✅ Dodano nowy przedmiot')),
+                            SnackBar(
+                              content: Text(isEditing
+                                  ? '✏️ Zaktualizowano przedmiot'
+                                  : '✅ Dodano nowy przedmiot'),
+                            ),
                           );
-                          Navigator.pop(context, true); // wraca na główny ekran
+                          Navigator.pop(context, true);
                         }
                       } catch (e) {
                         if (context.mounted) {
@@ -205,7 +234,7 @@ class _AddItemPageState extends State<AddItemPage> {
                     }
                   },
                   icon: const Icon(Icons.save),
-                  label: const Text('ZAPISZ'),
+                  label: Text(isEditing ? 'ZAKTUALIZUJ' : 'ZAPISZ'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
                     padding: const EdgeInsets.symmetric(
