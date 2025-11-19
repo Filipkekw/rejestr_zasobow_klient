@@ -16,6 +16,13 @@ class ApiService {
     }
   }
 
+  Future<void> deleteItem(int id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/items/$id'));
+    if (response.statusCode != 200) {
+      throw Exception('Nie udało się usunąć elementu $id');
+    }
+  }
+
   Future<void> ping() async {
     final response = await http.get(Uri.parse('$baseUrl/ping'));
     if (response.statusCode != 200) {
