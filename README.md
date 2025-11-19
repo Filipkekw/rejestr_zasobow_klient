@@ -6,7 +6,7 @@ Pozwala na przeglądanie zasobów z bazy SQLite zainstalowanej n
 ## Funkcje
 - pobiera listę pozycji z bazy na Raspberry Pi,
 - wyświetla nazwę, kategorię i datę zakupu i opis,
-- posiada przycisk "+" do dodania nowego zasobu (wkrótce).
+- dodaje element do listy 
 
 
 ## Wymagania

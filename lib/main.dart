@@ -3,6 +3,8 @@ import 'api/api_service.dart';
 import 'models/item.dart';
 import 'pages/add_item_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 void main() {
   runApp(const InventoryApp());
@@ -48,11 +50,27 @@ class ItemsPage extends StatefulWidget {
 class _ItemsPageState extends State<ItemsPage> {
   final ApiService api = ApiService('http://192.168.2.71:8000'); // ← adres Pi w Twojej sieci
   late Future<List<Item>> _futureItems;
+  late WebSocketChannel _channel;
 
   @override
   void initState() {
     super.initState();
+
     _futureItems = api.fetchItems();
+
+    _channel = IOWebSocketChannel.connect('ws://192.168.2.71:8000/ws');
+    _channel.stream.listen(
+      (message) {
+        print('🔥 WebSocket otrzymał -> $message');
+        if (message.contains('reload')) {
+          setState(() {
+            _futureItems = api.fetchItems();
+          });
+        }
+      },
+      onDone: () => print('⚠️ WebSocket zamknięty'),
+      onError: (error) => print('❌ Błąd WebSocket: $error'),
+    );
   }
 
   @override
