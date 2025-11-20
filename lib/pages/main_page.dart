@@ -23,6 +23,8 @@ class _MainPageState extends State<MainPage> {
   Set<int> _selectedIds = {}; // ID zaznaczonych rekordów
   String _sortOrder = 'none';
   List<String> _filterCategories = [];
+  bool _searchMode = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -115,24 +117,43 @@ class _MainPageState extends State<MainPage> {
       });
     }
   }
-
+ 
   // -------------------- BUDOWA STRONY --------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: _selectionMode
-            ? Text('Wybrane elementy: ${_selectedIds.length}')
-            : _editMode
-                ? const Text('Wybierz element do edycji')
-                : const Text('Rejestr zasobów'),
+        title: _searchMode
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.white),
+                cursorColor: Colors.white,
+                decoration: const InputDecoration(
+                  hintText: 'Szukaj...',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) {
+                  setState(() {});
+                },
+              )
+            : _selectionMode
+                ? Text('Wybrane elementy: ${_selectedIds.length}')
+                : _editMode
+                    ? const Text('Wybierz element do edycji')
+                    : const Text('Rejestr zasobów'),
         centerTitle: true,
-        leading: (_selectionMode || _editMode)
+        leading: (_selectionMode || _editMode || _searchMode)
             ? IconButton(
                 icon: const Icon(Icons.close),
                 tooltip: 'Anuluj tryb',
                 onPressed: () {
                   setState(() {
+                    if (_searchMode) {
+                      _searchMode = false;
+                      _searchController.clear();
+                    }
                     _selectionMode = false;
                     _editMode = false;
                     _selectedIds.clear();
@@ -141,11 +162,22 @@ class _MainPageState extends State<MainPage> {
               )
             : null,
         actions: [
-          if (!_selectionMode && !_editMode)
-            IconButton(
-              icon: const Icon(Icons.sort),
-              tooltip: 'Sortuj',
-              onPressed: _openSortPage,
+          if (!_selectionMode && !_editMode && !_searchMode)
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.sort),
+                  tooltip: 'Sortuj i filtruj',
+                  onPressed: _openSortPage,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  tooltip: 'Szukaj',
+                  onPressed: () {
+                    setState(() => _searchMode = true);
+                  },
+                ),
+              ],
             ),
           if (_selectionMode)
             IconButton(
@@ -164,6 +196,18 @@ class _MainPageState extends State<MainPage> {
             return Center(child: Text('Błąd: ${snapshot.error}'));
           } else {
             List<Item> items = snapshot.data!;
+
+            // --- dynamiczne wyszukiwanie ---
+            if (_searchController.text.isNotEmpty) {
+              final query = _searchController.text.toLowerCase();
+              items = items.where((item) {
+                return item.name.toLowerCase().contains(query) ||
+                    item.serialNumber.toLowerCase().contains(query) ||
+                    item.description.toLowerCase().contains(query);
+              }).toList();
+            }
+
+            // (pozostały kod sortowania, filtrów itp.)
 
             // ---- filtr kategorii ----
             if (_filterCategories.isNotEmpty) {
