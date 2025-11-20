@@ -5,7 +5,6 @@ import '../pages/add_item_page.dart';
 import 'sort_page.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -15,7 +14,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  final ApiService api = ApiService('http://192.168.2.71:8000');
+  final ApiService api = ApiService('http://192.168.2.136:8000');
   late Future<List<Item>> _futureItems;
   late WebSocketChannel _channel;
 
@@ -30,7 +29,7 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     _futureItems = api.fetchItems();
 
-    _channel = IOWebSocketChannel.connect('ws://192.168.2.71:8000/ws');
+    _channel = IOWebSocketChannel.connect('ws://192.168.2.136:8000/ws');
     _channel.stream.listen(
       (message) {
         if (message.contains('reload')) {
@@ -309,46 +308,62 @@ class _MainPageState extends State<MainPage> {
           }
         },
       ),
-      floatingActionButton: SpeedDial(
-        animatedIcon: AnimatedIcons.menu_close,
-        backgroundColor: Colors.blueAccent,
-        overlayOpacity: 0.3,
-        spacing: 10,
-        spaceBetweenChildren: 8,
-        children: [
-          // Dodawanie
-          SpeedDialChild(
-            child: const Icon(Icons.add),
-            backgroundColor: Colors.green,
-            onTap: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AddItemPage()),
-              );
-              if (result == true) {
-                setState(() => _futureItems = api.fetchItems());
-              }
-            },
-          ),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+        ),
+        child: SizedBox(
+          height: 60,
+          child: BottomAppBar(
+            color: Colors.blueAccent.withOpacity(0.9),
+            elevation: 3,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // 🗑 Usuń
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectionMode = true;
+                      _editMode = false;
+                    });
+                  },
+                  icon: const Icon(Icons.delete, color: Colors.white, size: 22),
+                ),
 
-          // Usuwanie
-          SpeedDialChild(
-            child: const Icon(Icons.delete),
-            backgroundColor: Colors.redAccent,
-            onTap: () {
-              setState(() => _selectionMode = true);
-            },
-          ),
+                // ➕ Dodaj
+                IconButton(
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AddItemPage()),
+                    );
+                    if (result == true) {
+                      setState(() => _futureItems = api.fetchItems());
+                    }
+                    setState(() {
+                      _selectionMode = false;
+                      _editMode = false;
+                    });
+                  },
+                  icon: const Icon(Icons.add, color: Colors.white, size: 28),
+                ),
 
-          // Edycja
-          SpeedDialChild(
-            child: const Icon(Icons.edit),
-            backgroundColor: Colors.orangeAccent,
-            onTap: () {
-              setState(() => _editMode = true);
-            },
+                // ✏️ Edytuj
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _editMode = true;
+                      _selectionMode = false;
+                    });
+                  },
+                  icon: const Icon(Icons.edit, color: Colors.white, size: 22),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
