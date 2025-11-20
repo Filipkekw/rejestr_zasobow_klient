@@ -194,34 +194,46 @@ class _AddItemPageState extends State<AddItemPage> {
 
                       try {
                         if (isEditing) {
-                          // 📝 aktualizacja istniejącego elementu
-                          await api.updateItem(
-                            widget.editItem!.id,
-                            _nameController.text.trim(),
-                            _selectedCategory ?? 'Inne',
-                            dateStr,
-                            _serialController.text.trim(),
-                            _descriptionController.text.trim(),
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Zapisywanie zmian...')),
                           );
+                          api
+                              .updateItem(
+                                widget.editItem!.id,
+                                _nameController.text.trim(),
+                                _selectedCategory ?? 'Inne',
+                                dateStr,
+                                _serialController.text.trim(),
+                                _descriptionController.text.trim(),
+                              )
+                              .then((_) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('✏️ Zaktualizowano przedmiot')),
+                              );
+                              Navigator.pop(context, true); // wróć na główną
+                            }
+                          });
                         } else {
-                          // ➕ dodawanie nowego elementu
-                          await api.addItem(
-                            name: _nameController.text.trim(),
-                            category: _selectedCategory ?? 'Inne',
-                            purchaseDate: dateStr,
-                            serialNumber: _serialController.text.trim(),
-                            description: _descriptionController.text.trim(),
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Zapisywanie zmian...')),
                           );
+                          api
+                              .addItem(
+                                name: _nameController.text.trim(),
+                                category: _selectedCategory ?? 'Inne',
+                                purchaseDate: dateStr,
+                                serialNumber: _serialController.text.trim(),
+                                description: _descriptionController.text.trim(),
+                              )
+                              .then((_) {
+                            if (context.mounted) {
+                              Navigator.pop(context, true);
+                            }
+                          });
                         }
 
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(isEditing
-                                  ? '✏️ Zaktualizowano przedmiot'
-                                  : '✅ Dodano nowy przedmiot'),
-                            ),
-                          );
                           Navigator.pop(context, true);
                         }
                       } catch (e) {

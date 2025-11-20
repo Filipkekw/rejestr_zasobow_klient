@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../api/api_service.dart';
 import '../models/item.dart';
 import '../pages/add_item_page.dart';
+import 'sort_page.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
@@ -21,6 +22,8 @@ class _MainPageState extends State<MainPage> {
   bool _selectionMode = false;
   bool _editMode = false;
   Set<int> _selectedIds = {}; // ID zaznaczonych rekordów
+  String _sortOrder = 'none';
+  List<String> _filterCategories = [];
 
   @override
   void initState() {
@@ -86,11 +89,32 @@ class _MainPageState extends State<MainPage> {
       MaterialPageRoute(builder: (context) => AddItemPage(editItem: item)),
     );
 
-    if (result == true) {
-      setState(() => _futureItems = api.fetchItems());
-    }
+    setState(() {
+      _editMode = false;
+      if (result == true) {
+        _futureItems = api.fetchItems();
+      }
+    });
+  }
+  // -------------------- SORTOWANIE --------------------
+  Future<void> _openSortPage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SortPage(
+          sortOrder: _sortOrder,
+          selectedCategories: _filterCategories,
+        ),
+      ),
+    );
 
-    setState(() => _editMode = false);
+    if (result != null && result is Map) {
+      setState(() {
+        _sortOrder = result['sortOrder'] as String;
+        _filterCategories =
+            List<String>.from(result['categories'] as List<String>);
+      });
+    }
   }
 
   // -------------------- BUDOWA STRONY --------------------
@@ -118,6 +142,12 @@ class _MainPageState extends State<MainPage> {
               )
             : null,
         actions: [
+          if (!_selectionMode && !_editMode)
+            IconButton(
+              icon: const Icon(Icons.sort),
+              tooltip: 'Sortuj',
+              onPressed: _openSortPage,
+            ),
           if (_selectionMode)
             IconButton(
               icon: const Icon(Icons.delete),
@@ -134,9 +164,20 @@ class _MainPageState extends State<MainPage> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Błąd: ${snapshot.error}'));
           } else {
-            final items = snapshot.data!;
-            if (items.isEmpty) {
-              return const Center(child: Text('Brak danych'));
+            List<Item> items = snapshot.data!;
+
+            // ---- filtr kategorii ----
+            if (_filterCategories.isNotEmpty) {
+              items = items
+                  .where((item) => _filterCategories.contains(item.category))
+                  .toList();
+            }
+
+            // ---- sortowanie daty ----
+            if (_sortOrder == 'desc') {
+              items.sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate)); // nowsze na górze
+            } else if (_sortOrder == 'asc') {
+              items.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate)); // starsze na górze
             }
 
             return ListView.builder(
