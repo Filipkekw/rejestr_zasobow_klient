@@ -118,7 +118,55 @@ class _MainPageState extends State<MainPage> {
       });
     }
   }
- 
+
+  Future<void> _refreshConnectionAndList() async {
+    try {
+      // zamknij stare połączenie, jeśli istnieje
+      await _channel.sink.close();
+    } catch (_) {}
+
+    // spróbuj ponownie utworzyć połączenie WebSocket
+    try {
+      _channel = IOWebSocketChannel.connect('ws://192.168.2.136:8000/ws'); // <- IP twojego RPi z :8000/ws
+      _channel.stream.listen(
+        (message) {
+          if (message.contains('reload')) {
+            setState(() {
+              _futureItems = api.fetchItems();
+            });
+          }
+        },
+        onError: (error) {
+          print('❌ Błąd WebSocket po odświeżeniu: $error');
+        },
+      );
+
+      // odśwież listę
+      setState(() {
+        _futureItems = api.fetchItems();
+      });
+
+      // pokaż komunikat sukcesu
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Połączenie odświeżone, lista zaktualizowana'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.redAccent,
+            content: Text('❌ Błąd odświeżania: $e'),
+          ),
+        );
+      }
+    }
+  }
+  
   // -------------------- BUDOWA STRONY --------------------
   @override
   Widget build(BuildContext context) {
@@ -161,13 +209,17 @@ class _MainPageState extends State<MainPage> {
                   });
                 },
               )
-            : null,
+            : IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Odśwież połączenie i listę',
+                onPressed: _refreshConnectionAndList,
+              ),
         actions: [
           if (!_selectionMode && !_editMode && !_searchMode)
             Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.sort),
+                  icon: const Icon(Icons.filter_list),
                   tooltip: 'Sortuj i filtruj',
                   onPressed: _openSortPage,
                 ),

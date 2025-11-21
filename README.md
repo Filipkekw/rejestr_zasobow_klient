@@ -1,58 +1,49 @@
 # Rejestr Zasobów – klient Flutter
 
-Aplikacja mobilna łącząca się z serwerem FastAPI uruchomionym na Raspberry Pi przez sieć Wi‑Fi.  
-Pozwala na przeglądanie zasobów z bazy SQLite zainstalowanej na RPi.
-
-## Funkcje
-- pobiera listę pozycji z bazy na Raspberry Pi,
-- wyświetla nazwę, kategorię i datę zakupu i opis,
-- dodaje element do listy 
-
+Klient mobilny Flutter do obsługi systemu "Rejestr zasobów" uruchomionego na Raspberry Pi.
+Łączy się z serwerem FastAPI po HTTP/WebSocket i umożliwia zarządzanie zasobami z telefonu.
 
 ## Wymagania
-- Flutter SDK 3.0+
-- Dart 3.0+
-- Android Studio / VS Code z pluginem Flutter
-- Telefon z Androidem lub emulator
-- Działający serwer FastAPI na Raspberry Pi (plik `wifi_server.py`)
-    - Instrukcje konfiguracji serwera zawarte w pliku README.md na github.com/Filipkekw/Rejestr_zasobow_RPi-4
+- Flutter SDK 3.x
+- Android Studio lub VS Code z pluginem Flutter
+- Telefon z Androidem z włączonym debugowaniem USB
+- Raspberry Pi z działającym serwerem 'wifi_server.py'
 
----
+## Konfiguracja
 
-## Konfiguracja połączenia z RPi
+1. Ustaw adres IP serwera RPi w:
 
-W pliku `lib/api/api_service.dart` zmień adres IP na adres Twojego Raspberry Pi, np.:
-
+'lib/pages/add_item_page.dart':
 ```dart
-final ApiService api = ApiService('http://192.168.2.10:8000');
+final api = ApiService('http://x.x.x.x:8000'); // linia 90
 ```
-
-Adres IP twojego Raspberry Pi sprawdzisz poleceniem:
+'lib/pages/main_page.dart':
+```dart
+final ApiService api = ApiService('http://x.x.x.x:8000'); // linia 17
+_channel = IOWebSocketChannel.connect('ws://x.x.x.x:8000/ws'); // linia 35 i 130
+```
+'lib/pages/item_preview_page.dart':
+```dart
+final ApiService api = ApiService('http://x.x.x.x:8000'); // linia 15
+```
+2. Upewnij się, że serwer na RPi działa:
 ```bash
-hostname -I;
+python3 wifi_server.py
 ```
-Upewnij się, że telefon i RPi są w tej samej sieci Wi-Fi.
-
-## Instalacja 
-W terminalu projektu wpisz:
-```bash
-flutter pub get;
-```
-## Uruchamianie na telefonie
-1. Podłącz telefon z Androidem do komputera przez kabel USB.
-2. Włącz Opcje programisty i Debugowanie USB
-3. Sprawdź połączenie w terminalu:
+## Uruchamianie
+1. Podłącz telefon przez USB i włącz debugowanie USB.
+2. Sprawdź urządzenie:
 ```bash
 flutter devices
 ```
-4. Uruchom aplikacje:
+3. Uruchom aplikację:
 ```bash
 flutter run
 ```
-
-## Budowanie i instalacja APK
-Aby utworzyć plik APK do ręcznej instalacji wpisz w terminalu:
-```bash
-flutter build apk --release
-```
-Utworzony plik skopiuj na telefon i zainstaluj.
+## Funkcje
+- Wyświetlanie listy zasobów z bazy RPi.
+- Dodawanie, edycja, usuwanie zasobów.
+- Sortowanie po dacie oraz filtrowanie po kategoriach.
+- Wyszukiwanie po nazwie, numerze seryjnym i opisie.
+- Podgląd szczegółów przedmiotu (z poziomu listy).
+- Automatyczna synchronizacja zmian z RPi (WebSocket).
