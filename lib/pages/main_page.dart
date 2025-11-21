@@ -5,6 +5,7 @@ import '../pages/add_item_page.dart';
 import 'sort_page.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'item_preview_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -14,7 +15,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  final ApiService api = ApiService('http://192.168.2.136:8000');
+  final ApiService api = ApiService('http://192.168.2.136:8000'); // <- IP twojego RPi z :8000
   late Future<List<Item>> _futureItems;
   late WebSocketChannel _channel;
 
@@ -31,7 +32,7 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     _futureItems = api.fetchItems();
 
-    _channel = IOWebSocketChannel.connect('ws://192.168.2.136:8000/ws');
+    _channel = IOWebSocketChannel.connect('ws://192.168.2.136:8000/ws'); // <- IP twojego RPi z :8000
     _channel.stream.listen(
       (message) {
         if (message.contains('reload')) {
@@ -221,6 +222,8 @@ class _MainPageState extends State<MainPage> {
               items.sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate)); // nowsze na górze
             } else if (_sortOrder == 'asc') {
               items.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate)); // starsze na górze
+            } else if (_sortOrder == 'none') {
+                items.sort((a, b) => a.id.compareTo(b.id));
             }
 
             return ListView.builder(
@@ -235,6 +238,14 @@ class _MainPageState extends State<MainPage> {
                       _selectionMode = true;
                       _selectedIds.add(item.id);
                     });
+                  },
+                  onDoubleTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ItemPreviewPage(item: item),
+                      ),
+                    );
                   },
                   onTap: _selectionMode
                       ? () {
@@ -363,46 +374,69 @@ class _MainPageState extends State<MainPage> {
             color: Colors.blueAccent.withOpacity(0.9),
             elevation: 3,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 // 🗑 Usuń
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectionMode = true;
-                      _editMode = false;
-                    });
-                  },
-                  icon: const Icon(Icons.delete, color: Colors.white, size: 22),
+                Expanded(
+                  child: InkResponse(
+                    radius: 0,
+                    onTap: () {
+                      setState(() {
+                        _selectionMode = true;
+                        _editMode = false;
+                      });
+                    },
+                    child: const SizedBox(
+                      height: 60, // <- pełna wysokość obszaru dotykowego
+                      child: Center(
+                        child: Icon(Icons.delete, color: Colors.white, size: 22),
+                      ),
+                    ),
+                  ),
                 ),
 
                 // ➕ Dodaj
-                IconButton(
-                  onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const AddItemPage()),
-                    );
-                    if (result == true) {
-                      setState(() => _futureItems = api.fetchItems());
-                    }
-                    setState(() {
-                      _selectionMode = false;
-                      _editMode = false;
-                    });
-                  },
-                  icon: const Icon(Icons.add, color: Colors.white, size: 28),
+                Expanded(
+                  child: InkResponse(
+                    radius: 0,
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const AddItemPage()),
+                      );
+                      if (result == true) {
+                        setState(() => _futureItems = api.fetchItems());
+                      }
+                      setState(() {
+                        _selectionMode = false;
+                        _editMode = false;
+                      });
+                    },
+                    child: const SizedBox(
+                      height: 60,
+                      child: Center(
+                        child: Icon(Icons.add, color: Colors.white, size: 28),
+                      ),
+                    ),
+                  ),
                 ),
 
                 // ✏️ Edytuj
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _editMode = true;
-                      _selectionMode = false;
-                    });
-                  },
-                  icon: const Icon(Icons.edit, color: Colors.white, size: 22),
+                Expanded(
+                  child: InkResponse(
+                    radius: 0,
+                    onTap: () {
+                      setState(() {
+                        _editMode = true;
+                        _selectionMode = false;
+                      });
+                    },
+                    child: const SizedBox(
+                      height: 60,
+                      child: Center(
+                        child: Icon(Icons.edit, color: Colors.white, size: 22),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

@@ -87,7 +87,7 @@ class _AddItemPageState extends State<AddItemPage> {
   Widget build(BuildContext context) {
     final dateFormatted = DateFormat('yyyy-MM-dd').format(_selectedDate);
     final isEditing = widget.editItem != null;
-    final api = ApiService('http://192.168.2.136:8000'); // IP twojego RPi
+    final api = ApiService('http://192.168.2.136:8000'); // IP twojego RPi z :8000
 
     return Scaffold(
       appBar: AppBar(
